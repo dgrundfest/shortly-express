@@ -4,6 +4,7 @@ var partials = require('express-partials');
 var bodyParser = require('body-parser');
 // var cookieParser = require('cookie-parser');
 var session = require('express-session');
+var Promise = require('bluebird');
 
 
 var db = require('./app/config');
@@ -28,17 +29,19 @@ app.use(session({ secret: 'a ver secret session', cookie: { maxAge: 600000 }}));
 
 app.get('/',
 function(req, res) {
-  console.log(req.session.user);
+  checkUser(res, req.session);
   res.render('index');
 });
 
 app.get('/create',
 function(req, res) {
+  checkUser(res, req.session);
   res.render('index');
 });
 
 app.get('/links',
 function(req, res) {
+  checkUser(res, req.session);
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
@@ -98,7 +101,7 @@ app.post('/signup', function(req, res){
       // console.log('found',found);
       if(found){
         console.log("USER ALREADY EXISTS");
-        res.send(200, found.attributes );
+        res.redirect('/signup');
       } else {
         var user = new User({
           username:req.body.username,
@@ -114,23 +117,17 @@ app.post('/signup', function(req, res){
 
 });
 
-var authenticate = function(username, req , res){
-  req.session.regenerate(function(){
-    req.session.user = username;
-    res.redirect('/');
-  });
-};
-
-
 app.post('/login', function(req, res){
    new User({username:req.body.username})
     .fetch().then(function(found){
-      // console.log('found',found);
-      if (found.login(req.body.password)) {
+      if(!found){
+        res.redirect('/login');
+      }
+      else if (found.login(req.body.password)) {
         console.log ("WIN");
         authenticate(req.body.username, req, res);
       } else {
-        console.log("Invalid user");
+        res.redirect('/login');
       }
     });
 });
@@ -142,6 +139,8 @@ app.post('/login', function(req, res){
 /************************************************************/
 
 app.get('/*', function(req, res) {
+  console.log('HIT WILDCARD',req.body.url);
+
   new Link({ code: req.params[0] }).fetch().then(function(link) {
     if (!link) {
       res.redirect('/');
@@ -162,6 +161,35 @@ app.get('/*', function(req, res) {
     }
   });
 });
+
+/************************************************************/
+// HELPER FUNCTIONS
+/************************************************************/
+
+var authenticate = function(username, req , res){
+  req.session.regenerate(function(){
+    req.session.user = username;
+    res.redirect('/');
+  });
+};
+
+
+var checkUser = Promise.method(function(res, session) {
+  if (session.user === undefined) {
+    res.redirect('/login');
+  }
+});
+
+// var checkUser = function(res, session) {
+//   if (session.user === undefined) {
+//     res.redirect('/login');
+//     return false;
+//   }
+//   return true;
+// };
+
+
+
 
 console.log('Shortly is listening on 4568');
 app.listen(4568);

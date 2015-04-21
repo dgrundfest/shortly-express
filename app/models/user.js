@@ -12,7 +12,6 @@ var User = db.Model.extend({
   initialize: function(){
     this.on('creating',function(model,attrs,options){
       model.set('password', bcrypt.hashSync(model.get('password'), null, null));
-      console.log('Model',model);
     });
   },
   login :function (password){
