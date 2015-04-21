@@ -40,10 +40,10 @@ describe('', function() {
       .del()
       .catch(function(error) {
         // uncomment when writing authentication tests
-        // throw {
-        //   type: 'DatabaseError',
-        //   message: 'Failed to create test setup data'
-        // };
+        throw {
+          type: 'DatabaseError',
+          message: 'Failed to create test setup data'
+        };
       });
 
     // delete user Phillip from db so it can be created later for the test
@@ -52,10 +52,10 @@ describe('', function() {
       .del()
       .catch(function(error) {
         // uncomment when writing authentication tests
-        // throw {
-        //   type: 'DatabaseError',
-        //   message: 'Failed to create test setup data'
-        // };
+        throw {
+          type: 'DatabaseError',
+          message: 'Failed to create test setup data'
+        };
       });
   });
 
@@ -63,7 +63,7 @@ describe('', function() {
 
     var requestWithSession = request.defaults({jar: true});
 
-    xbeforeEach(function(done){      // create a user that we can then log-in with
+    beforeEach(function(done){      // create a user that we can then log-in with
       new User({
           'username': 'Phillip',
           'password': 'Phillip'
@@ -136,12 +136,12 @@ describe('', function() {
       it('Fetches the link url title', function (done) {
         requestWithSession(options, function(error, res, body) {
           db.knex('urls')
-            .where('title', '=', 'Rofl Zoo - Daily funny animal pictures')
+            .where('title', '=', 'Funny pictures of animals, funny dog pictures')
             .then(function(urls) {
               if (urls['0'] && urls['0']['title']) {
                 var foundTitle = urls['0']['title'];
               }
-              expect(foundTitle).to.equal('Rofl Zoo - Daily funny animal pictures');
+              expect(foundTitle).to.equal('Funny pictures of animals, funny dog pictures');
               done();
             });
         });
@@ -190,7 +190,7 @@ describe('', function() {
 
         requestWithSession(options, function(error, res, body) {
           var currentLocation = res.request.href;
-          expect(currentLocation).to.equal('http://www.roflzoo.com/');
+          expect(currentLocation).to.equal('http://roflzoo.com/');
           done();
         });
       });
