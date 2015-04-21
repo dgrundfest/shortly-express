@@ -11,16 +11,15 @@ var User = db.Model.extend({
   },
   initialize: function(){
     this.on('creating',function(model,attrs,options){
-      model.set('username', attrs.username);
-   //   model.set('password', bcrypt.hashSync(attrs.password, null, null));
-        // .then(function(hash){
-        //   console.log(hash);
-        // }));
+      model.set('password', bcrypt.hashSync(model.get('password'), null, null));
+      console.log('Model',model);
     });
   },
   login :function (password){
-   // return bcrypt.compareSync(password,model.get('password'));
-    //.then(function(result){console.log(result);});
+    var success = bcrypt.compareSync(password,this.get('password'));
+    console.log(password, success);
+    return success;
+
   }
 
 });

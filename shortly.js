@@ -2,6 +2,8 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+// var cookieParser = require('cookie-parser');
+var session = require('express-session');
 
 
 var db = require('./app/config');
@@ -22,9 +24,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
+app.use(session({ secret: 'a ver secret session', cookie: { maxAge: 600000 }}));
 
 app.get('/',
 function(req, res) {
+  console.log(req.session.user);
   res.render('index');
 });
 
@@ -68,6 +72,7 @@ function(req, res) {
         link.save().then(function(newLink) {
           Links.add(newLink);
           res.send(200, newLink);
+
         });
       });
     }
@@ -90,19 +95,18 @@ function(req, res) {
 app.post('/signup', function(req, res){
   new User({username:req.body.username})
     .fetch().then(function(found){
+      // console.log('found',found);
       if(found){
         console.log("USER ALREADY EXISTS");
         res.send(200, found.attributes );
       } else {
         var user = new User({
-          username: req.body.username,
-          password: req.body.password
-        });
-
+          username:req.body.username,
+          password:req.body.password});
+         // console.log('USER:',user);
         user.save().then(function(newUser) {
           Users.add(newUser);
-          console.log('successfully added new user');
-          res.redirect('/');
+          authenticate(req.body.username,req,res);
         });
       }
     });
@@ -110,8 +114,25 @@ app.post('/signup', function(req, res){
 
 });
 
-app.post('/login', function(req, res){
+var authenticate = function(username, req , res){
+  req.session.regenerate(function(){
+    req.session.user = username;
+    res.redirect('/');
+  });
+};
 
+
+app.post('/login', function(req, res){
+   new User({username:req.body.username})
+    .fetch().then(function(found){
+      // console.log('found',found);
+      if (found.login(req.body.password)) {
+        console.log ("WIN");
+        authenticate(req.body.username, req, res);
+      } else {
+        console.log("Invalid user");
+      }
+    });
 });
 
 /************************************************************/
